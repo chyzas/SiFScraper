@@ -1,2 +1,3 @@
 /Scraper/config.py
 *.pyc
+.idea/

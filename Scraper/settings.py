@@ -24,7 +24,7 @@ EXTENSIONS = {
 # Database connection details
 DB_SETTINGS = {
     'USER': 'root',
-    'PASSWD': 'root',
+    'PASSWD': '',
     'HOST': '127.0.0.1',
     'DB_NAME': 'sif'
 }

@@ -8,15 +8,15 @@ import MySQLdb
 
 SKELBIU = "skelbiu"
 
-
 def get_url_and_ids_from_db():
     conn = MySQLdb.connect(DB_SETTINGS['HOST'], DB_SETTINGS['USER'], DB_SETTINGS['PASSWD'], DB_SETTINGS['DB_NAME'],
                            charset="utf8")
     cursor = conn.cursor()
-    query = "SELECT id, user_id, url FROM filter WHERE site_id = %s" % (SITES[SKELBIU])
+    query = "SELECT f.id, f.user_id, f.url FROM filter f " \
+            "INNER JOIN fos_user u ON f.user_id = u.id " \
+            "WHERE f.site_id = %s AND u.enabled = 1 AND f.active = 1" % (SITES[SKELBIU])
     cursor.execute(query)
     return cursor.fetchall()
-
 
 class SkelbiuSpider(scrapy.Spider):
     name = SKELBIU
@@ -38,7 +38,7 @@ class SkelbiuSpider(scrapy.Spider):
             item['filter_id'] = filter_id
             yield item
 
-        next_page = response.xpath(".//a[@id='nextLink']/@href")
+        next_page = response.xpath(".//*[@id='pagination']/a[contains(@rel,'next')]/@href")
         if next_page:
             url = urlparse.urljoin(response.url, next_page.extract()[0])
             yield Request(url, self.parse, meta={'id': filter_id, 'user_id': user_id})
