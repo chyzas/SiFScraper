@@ -12,4 +12,5 @@ class ScraperItem(Item):
     url = Field()
     price = Field()
     filter_id = Field()
+    details = Field()
 

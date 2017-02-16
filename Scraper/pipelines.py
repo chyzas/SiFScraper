@@ -23,17 +23,17 @@ class MySQLStorePipeline(object):
 
     def process_item(self, item, spider):
         try:
-            self.cursor.execute("""INSERT INTO results (filter_id, is_new, price, url, title, added_on)
-                VALUES (%s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE is_new = 0 """,
+            self.cursor.execute("""INSERT INTO results (filter_id, is_new, price, url, title, added_on, details)
+                VALUES (%s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE is_new = 0 """,
                                 (
                                     item['filter_id'],
                                     1,
                                     item['price'],
                                     item['url'],
                                     item['title'],
-                                    strftime("%Y-%m-%d %H:%M:%S")
+                                    strftime("%Y-%m-%d %H:%M:%S"),
+                                    item['details']
                                 ))
-
             self.conn.commit()
 
         except MySQLdb.Error, e:

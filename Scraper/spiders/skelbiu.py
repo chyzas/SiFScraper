@@ -36,6 +36,7 @@ class SkelbiuSpider(scrapy.Spider):
             item['url'] = urlparse.urljoin(response.url, sel.xpath('a/@href').extract()[0])
             item['price'] = self.get_price(sel)
             item['filter_id'] = filter_id
+            item['details'] = self.get_details(sel)
             yield item
 
         next_page = response.xpath(".//*[@id='pagination']/a[contains(@rel,'next')]/@href")
@@ -50,5 +51,11 @@ class SkelbiuSpider(scrapy.Spider):
     def get_price(self, selector):
         raw_price = selector.xpath('.//div[@class="adsPrice"]/text()').extract()[0]
         return raw_price.encode('ascii', errors='ignore').strip().replace(' ', '')
+
+    def get_details(self, selector):
+        try:
+            return ' '.join(selector.xpath(".//div[@class='itemReview']/div[@class='adsTexts']//text()").extract()).encode('ascii', errors='ignore')
+        except Exception as e:
+            return ''
 
 

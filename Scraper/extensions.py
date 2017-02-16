@@ -14,7 +14,7 @@ def get_items_from_db():
                            charset="utf8")
     cursor = conn.cursor()
 
-    query = "SELECT f.filter_name, r.price, r.url, r.title, u.`email` from results r " \
+    query = "SELECT f.filter_name, r.price, r.url, r.title, r.details, u.`email` from results r " \
             "INNER JOIN `filter` f on r.filter_id = f.id " \
             "INNER JOIN fos_user u on f.user_id = u.id WHERE r.`is_new` = 1"
     cursor.execute(query)
@@ -24,7 +24,7 @@ def get_items_from_db():
 def group_items(data, item):
     d = defaultdict(list)
     for line in data:
-        d[line[item]].append(line[:4])
+        d[line[item]].append(line[:5])
     return d
 
 
@@ -72,7 +72,7 @@ class Mailer(object):
 
     def spider_closed(self, spider, reason):
         items = get_items_from_db()
-        grouped = group_items(items, 4)
+        grouped = group_items(items, 5)
         if items != self.num_items:
             for user in grouped:
                 message = self.format_message(grouped[user])
@@ -82,13 +82,14 @@ class Mailer(object):
         msg = ''
         filter_group = group_items(data, 0)
         for filter in filter_group:
-            msg += filter + '\n'
-            msg += '*' * 10 + '\n'
+            msg += filter + '<br'
+            msg += '*' * 10 + '<br>'
             for line in filter_group[filter]:
-                msg += line[2] + '\n'
-                msg += 'Price ' + str(line[1]) + '\n'
-                msg += line[3] + '\n'
-                msg += '-' * 10 + '\n'
+                msg += line[2] + '<br>'
+                msg += 'Price ' + str(line[1]) + '<br>'
+                msg += line[3] + '<br>'
+                msg += line[4] + '<br>'
+                msg += '-' * 10 + '<br>'
         return msg
 
 

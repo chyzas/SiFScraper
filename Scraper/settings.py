@@ -30,7 +30,8 @@ DB_SETTINGS = {
 }
 
 SITES = {
-    'skelbiu': 1
+    'skelbiu': 1,
+    'autoplius': 2,
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
