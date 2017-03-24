@@ -38,7 +38,7 @@ def send_mail(message, title, recipient):
     msg['To'] = recipient
     msg['Subject'] = title
 
-    msg.attach(MIMEText(message, 'plain'))
+    msg.attach(MIMEText(message, 'html'))
     mailServer = smtplib.SMTP('smtp.gmail.com', 587)
     mailServer.ehlo()
     mailServer.starttls()
@@ -90,7 +90,18 @@ class Mailer(object):
                 msg += line[3] + '<br>'
                 msg += line[4] + '<br>'
                 msg += '-' * 10 + '<br>'
-        return msg
+        start = """\
+               <html>
+                 <head></head>
+                 <body>
+                 <br>
+            """
+        end = """
+       </body>
+     </html>
+     """
+
+        return start + msg + end
 
 
 
