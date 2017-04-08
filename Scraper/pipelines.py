@@ -22,15 +22,18 @@ class MySQLStorePipeline(object):
             result.is_new = 0
             result.save()
         except Results.DoesNotExist:
-            Results.create(
-                filter=item['filter_id'],
-                is_new=1,
-                price=item['price'],
-                url=item['url'],
-                title=item['title'],
-                added_on=strftime("%Y-%m-%d %H:%M:%S"),
-                details=item['details'],
-                item=item['item_id']
-            )
+            try:
+                Results.create(
+                    filter=item['filter_id'],
+                    is_new=1,
+                    price=item['price'],
+                    url=item['url'],
+                    title=item['title'],
+                    added_on=strftime("%Y-%m-%d %H:%M:%S"),
+                    details=item['details'],
+                    item=item['item_id']
+                )
+            except Exception as e:
+                print e.message
 
         return item

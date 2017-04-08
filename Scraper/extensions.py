@@ -4,21 +4,20 @@ from email.mime.text import MIMEText
 import smtplib
 from scrapy import signals
 from scrapy.mail import MailSender
-from Scraper.settings import DB_SETTINGS
 from Scraper.config import GMAIL
-import MySQLdb
-
+from Scraper.sif_models import *
 
 def get_items_from_db():
-    conn = MySQLdb.connect(DB_SETTINGS['HOST'], DB_SETTINGS['USER'], DB_SETTINGS['PASSWD'], DB_SETTINGS['DB_NAME'],
-                           charset="utf8")
-    cursor = conn.cursor()
-
-    query = "SELECT f.filter_name, r.price, r.url, r.title, r.details, u.`email` from results r " \
-            "INNER JOIN `filter` f on r.filter_id = f.id " \
-            "INNER JOIN fos_user u on f.user_id = u.id WHERE r.`is_new` = 1"
-    cursor.execute(query)
-    return cursor.fetchall()
+    return Results.select(
+        Filter.filter_name,
+        Results.price,
+        Results.url,
+        Results.title,
+        Results.details,
+        FosUser.email,
+    ).join(Filter).join(FosUser, on=(Filter.user_id == FosUser.id)).where(
+        Results.is_new == 1
+    ).tuples().execute()
 
 
 def group_items(data, item):
@@ -72,7 +71,8 @@ class Mailer(object):
 
     def spider_closed(self, spider, reason):
         items = get_items_from_db()
-        grouped = group_items(items, 5)
+        # 5 -> email key. need to improve that
+        grouped = group_items(items._result_cache, 5)
         if items != self.num_items:
             for user in grouped:
                 message = self.format_message(grouped[user])
