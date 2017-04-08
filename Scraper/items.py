@@ -13,4 +13,5 @@ class ScraperItem(Item):
     price = Field()
     filter_id = Field()
     details = Field()
+    item_id = Field()
 

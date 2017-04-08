@@ -3,20 +3,9 @@ import urlparse
 import scrapy
 from Scraper.items import ScraperItem
 from scrapy import Request
-from Scraper.settings import SITES, DB_SETTINGS
-import MySQLdb
+from Scraper.sif_models import *
 
 NAME = "autoplius"
-
-def get_url_and_ids_from_db():
-    conn = MySQLdb.connect(DB_SETTINGS['HOST'], DB_SETTINGS['USER'], DB_SETTINGS['PASSWD'], DB_SETTINGS['DB_NAME'],
-                           charset="utf8")
-    cursor = conn.cursor()
-    query = "SELECT f.id, f.user_id, f.url FROM filter f " \
-            "INNER JOIN fos_user u ON f.user_id = u.id " \
-            "WHERE f.site_id = %s AND u.enabled = 1 AND f.active = 1" % (SITES[NAME])
-    cursor.execute(query)
-    return cursor.fetchall()
 
 class AutopliusSpider(scrapy.Spider):
     name = NAME
@@ -24,9 +13,13 @@ class AutopliusSpider(scrapy.Spider):
     allowed_domains = ["autoplius.lt"]
 
     def start_requests(self):
-        items = get_url_and_ids_from_db()
-        for id, user_id, url in items:
-            yield Request(url, meta={'id': id, 'user_id': user_id})
+        filters = Filter.select(Filter, FosUser).join(FosUser).where(
+            Filter.site == SITES[NAME],
+            FosUser.enabled == 1,
+            Filter.active == 1
+        )
+        for filter in filters:
+            yield Request(filter.url, meta={'id': filter.id, 'user_id': filter.user_id})
 
     def parse(self, response):
         try:
@@ -36,11 +29,13 @@ class AutopliusSpider(scrapy.Spider):
             for sel in items:
                 if len(sel.xpath("./div[@class='item-section fr']/div[@class='price-list price-list-promo rel']")) == 0:
                     item = ScraperItem()
+                    url = urlparse.urljoin(response.url, sel.xpath("./div[@class='item-section fr']/h2[@class='title-list']/a/@href").extract()[0])
                     item['title'] = self.get_title(sel)
-                    item['url'] = urlparse.urljoin(response.url, sel.xpath("./div[@class='item-section fr']/h2[@class='title-list']/a/@href").extract()[0])
+                    item['url'] = url
                     item['price'] = self.get_price(sel)
                     item['filter_id'] = filter_id
                     item['details'] = self.get_details(sel)
+                    item['item_id'] = url.split('-')[-1].split('.')[0]
                     yield item
 
             next_page = response.xpath("(//*[@class='next']/@href)[1]")

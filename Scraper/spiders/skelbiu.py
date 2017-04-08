@@ -3,29 +3,22 @@ import urlparse
 import scrapy
 from Scraper.items import ScraperItem
 from scrapy import Request
-from Scraper.settings import SITES, DB_SETTINGS
-import MySQLdb
+from Scraper.sif_models import *
 
 SKELBIU = "skelbiu"
-
-def get_url_and_ids_from_db():
-    conn = MySQLdb.connect(DB_SETTINGS['HOST'], DB_SETTINGS['USER'], DB_SETTINGS['PASSWD'], DB_SETTINGS['DB_NAME'],
-                           charset="utf8")
-    cursor = conn.cursor()
-    query = "SELECT f.id, f.user_id, f.url FROM filter f " \
-            "INNER JOIN fos_user u ON f.user_id = u.id " \
-            "WHERE f.site_id = %s AND u.enabled = 1 AND f.active = 1" % (SITES[SKELBIU])
-    cursor.execute(query)
-    return cursor.fetchall()
 
 class SkelbiuSpider(scrapy.Spider):
     name = SKELBIU
     allowed_domains = ["skelbiu.lt"]
 
     def start_requests(self):
-        items = get_url_and_ids_from_db()
-        for id, user_id, url in items:
-            yield Request(url, meta={'id': id, 'user_id': user_id})
+        filters = Filter.select(Filter, FosUser).join(FosUser).where(
+            Filter.site == SITES[SKELBIU],
+            FosUser.enabled == 1,
+            Filter.active == 1
+        )
+        for filter in filters:
+            yield Request(filter.url, meta={'id': filter.id, 'user_id': filter.user_id})
 
     def parse(self, response):
         filter_id = response.meta['id']
@@ -37,6 +30,7 @@ class SkelbiuSpider(scrapy.Spider):
             item['price'] = self.get_price(sel)
             item['filter_id'] = filter_id
             item['details'] = self.get_details(sel)
+            item['item_id'] = self.get_id(sel)
             yield item
 
         next_page = response.xpath(".//*[@id='pagination']/a[contains(@rel,'next')]/@href")
@@ -57,5 +51,8 @@ class SkelbiuSpider(scrapy.Spider):
             return ' '.join(selector.xpath(".//div[@class='itemReview']/div[@class='adsTexts']//text()").extract()).encode('ascii', errors='ignore')
         except Exception as e:
             return ''
+
+    def get_id(self, sel):
+        return sel.xpath("@id")[0].root
 
 
