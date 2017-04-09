@@ -7,19 +7,6 @@ from scrapy.mail import MailSender
 from Scraper.config import GMAIL
 from Scraper.sif_models import *
 
-def get_items_from_db():
-    return Results.select(
-        Filter.filter_name,
-        Results.price,
-        Results.url,
-        Results.title,
-        Results.details,
-        FosUser.email,
-    ).join(Filter).join(FosUser, on=(Filter.user_id == FosUser.id)).where(
-        Results.is_new == 1
-    ).tuples().execute()
-
-
 def group_items(data, item):
     d = defaultdict(list)
     for line in data:
@@ -70,26 +57,34 @@ class Mailer(object):
         self.num_items += 1
 
     def spider_closed(self, spider, reason):
-        items = get_items_from_db()
+        items = Results.select(
+        Filter.filter_name,
+        Results.price,
+        Results.url,
+        Results.title,
+        Results.details,
+        FosUser.email,
+    ).join(Filter).join(FosUser, on=(Filter.user_id == FosUser.id)).where(
+        Results.is_new == 1
+    ).tuples()
         # 5 -> email key. need to improve that
-        grouped = group_items(items._result_cache, 5)
-        if items != self.num_items:
-            for user in grouped:
-                message = self.format_message(grouped[user])
-                send_mail(message, 'info', user)
+        grouped = group_items(list(items), 5)
+        for user in grouped:
+            message = self.format_message(grouped[user])
+            send_mail(message, 'info', user)
 
     def format_message(self, data):
         msg = ''
         filter_group = group_items(data, 0)
         for filter in filter_group:
-            msg += filter + '<br'
-            msg += '*' * 10 + '<br>'
+            msg += '<h3>' +filter + '</h3><br>'
+            msg += '*' * 20 + '<br>'
             for line in filter_group[filter]:
                 msg += line[2] + '<br>'
-                msg += 'Price ' + str(line[1]) + '<br>'
+                msg += 'Kaina: <strong>' + str(line[1]) + '</strong><br>'
                 msg += line[3] + '<br>'
                 msg += line[4] + '<br>'
-                msg += '-' * 10 + '<br>'
+                msg += '-' * 20 + '<br>'
         start = """\
                <html>
                  <head></head>
