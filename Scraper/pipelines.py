@@ -7,6 +7,9 @@
 
 from time import strftime
 from Scraper.sif_models import *
+import logging
+
+logging.basicConfig(filename='pipeline.log',level=logging.DEBUG,)
 
 class ScraperPipeline(object):
     def process_item(self, item, spider):
@@ -34,6 +37,7 @@ class MySQLStorePipeline(object):
                     item=item['item_id']
                 )
             except Exception as e:
+                logging.error(e.message)
                 print e.message
 
         return item

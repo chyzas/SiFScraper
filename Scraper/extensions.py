@@ -6,11 +6,15 @@ from scrapy import signals
 from scrapy.mail import MailSender
 from Scraper.config import GMAIL
 from Scraper.sif_models import *
+from Scraper.settings import WEBSITE
+import logging
+
+logging.basicConfig(filename='extensions.log',level=logging.DEBUG,)
 
 def group_items(data, item):
     d = defaultdict(list)
     for line in data:
-        d[line[item]].append(line[:5])
+        d[line[item]].append(line[:6])
     return d
 
 
@@ -32,6 +36,7 @@ def send_mail(message, title, recipient):
     mailServer.login(gmailUser, gmailPassword)
     mailServer.sendmail(gmailUser, recipient, msg.as_string())
     mailServer.close()
+
 
 class Mailer(object):
     def __init__(self, mail):
@@ -57,34 +62,35 @@ class Mailer(object):
         self.num_items += 1
 
     def spider_closed(self, spider, reason):
-        items = Results.select(
-        Filter.filter_name,
-        Results.price,
-        Results.url,
-        Results.title,
-        Results.details,
-        FosUser.email,
-    ).join(Filter).join(FosUser, on=(Filter.user_id == FosUser.id)).where(
-        Results.is_new == 1
-    ).tuples()
-        # 5 -> email key. need to improve that
-        grouped = group_items(list(items), 5)
-        for user in grouped:
-            message = self.format_message(grouped[user])
-            send_mail(message, 'info', user)
+        items = Results.select(FosUser.email).join(Filter).join(FosUser).join(Websites,
+                                                                              on=Filter.site_id == Websites.id).where(
+            Results.is_new == 1).where(Websites.name == spider.name).group_by(FosUser.email).tuples()
 
-    def format_message(self, data):
+        for email in items:
+            message = self.format_message(email)
+            try:
+                send_mail(message, 'info', email[0])
+            except Exception as e:
+                logging.error(e.message)
+                print e.message
+
+    def format_message(self, email):
+        results = Results.select(Results, Filter.filter_name).join(Filter).join(FosUser).where(FosUser.email == email).where(Results.is_new == 1).group_by(Filter.filter_name)
         msg = ''
-        filter_group = group_items(data, 0)
-        for filter in filter_group:
-            msg += '<h3>' +filter + '</h3><br>'
-            msg += '*' * 20 + '<br>'
-            for line in filter_group[filter]:
-                msg += line[2] + '<br>'
-                msg += 'Kaina: <strong>' + str(line[1]) + '</strong><br>'
-                msg += line[3] + '<br>'
-                msg += line[4] + '<br>'
-                msg += '-' * 20 + '<br>'
+        try:
+            for filter in results:
+                msg += '<h3>' + filter.filter.filter_name + '</h3><br>'
+                msg += '<a href="' + WEBSITE + 'user/filter/' + str(filter.filter.id) + '/delete'+'">Atsisakyti</a>'
+                msg += '<br>'
+                msg += '*' * 20 + '<br>'
+                for result in filter.filter.results_set:
+                    msg += result.url + '<br>'
+                    msg += 'Kaina: <strong>' + str(result.price) + '</strong><br>'
+                    msg += result.title + '<br>'
+                    msg += result.details + '<br>'
+                    msg += '-' * 20 + '<br>'
+        except Exception as e:
+            print e.message
         start = """\
                <html>
                  <head></head>
@@ -97,6 +103,3 @@ class Mailer(object):
      """
 
         return start + msg + end
-
-
-

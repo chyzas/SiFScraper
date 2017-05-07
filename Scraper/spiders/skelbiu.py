@@ -25,15 +25,14 @@ class SkelbiuSpider(scrapy.Spider):
         user_id = response.meta['user_id']
         for sel in response.xpath('.//li[@class="simpleAds"]'):
             price = self.get_price(sel)
-            if price:
-                item = ScraperItem()
-                item['title'] = self.get_title(sel)
-                item['url'] = urlparse.urljoin(response.url, sel.xpath('a/@href').extract()[0])
-                item['price'] = price
-                item['filter_id'] = filter_id
-                item['details'] = self.get_details(sel)
-                item['item_id'] = self.get_id(sel)
-                yield item
+            item = ScraperItem()
+            item['title'] = self.get_title(sel)
+            item['url'] = urlparse.urljoin(response.url, sel.xpath('a/@href').extract()[0])
+            item['price'] = price if price else ''
+            item['filter_id'] = filter_id
+            item['details'] = self.get_details(sel)
+            item['item_id'] = self.get_id(sel)
+            yield item
 
         next_page = response.xpath(".//*[@id='pagination']/a[contains(@rel,'next')]/@href")
         if next_page:

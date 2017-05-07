@@ -63,7 +63,7 @@ class Results(BaseModel):
     filter = ForeignKeyField(db_column='filter_id', null=True, rel_model=Filter, to_field='id')
     is_new = IntegerField(null=True)
     item = TextField(db_column='item_id')
-    price = IntegerField(null=True)
+    price = CharField(null=True)
     title = TextField(null=True)
     url = CharField(unique=True)
 

@@ -2,3 +2,5 @@
 *.pyc
 .idea/
 Scraper/main.py
+/Scraper/config.py
+/Scraper/extensions.log
