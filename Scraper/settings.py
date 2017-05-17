@@ -36,6 +36,14 @@ SITES = {
     'autoplius': 2,
 }
 
+MAIL = {
+    'server': '',
+    'user': '',
+    'pass': '',
+    'port': 587,
+    'from': ''
+}
+
 WEBSITE = 'http://skelbimuseklys.lt/'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

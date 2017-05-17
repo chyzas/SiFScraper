@@ -1,40 +1,31 @@
-from collections import defaultdict
+# -*- coding: utf-8 -*-
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 from scrapy import signals
 from scrapy.mail import MailSender
-from Scraper.config import GMAIL
 from Scraper.sif_models import *
 from Scraper.settings import WEBSITE
+from Scraper.settings import MAIL
 import logging
 
 logging.basicConfig(filename='extensions.log',level=logging.DEBUG,)
 
-def group_items(data, item):
-    d = defaultdict(list)
-    for line in data:
-        d[line[item]].append(line[:6])
-    return d
-
 
 def send_mail(message, title, recipient):
-    print "Sending mail..........."
-    gmailUser = GMAIL['USER']
-    gmailPassword = GMAIL['PASS']
-
     msg = MIMEMultipart()
-    msg['From'] = gmailUser
+    msg['From'] = MAIL['from']
     msg['To'] = recipient
     msg['Subject'] = title
 
-    msg.attach(MIMEText(message, 'html'))
-    mailServer = smtplib.SMTP('smtp.gmail.com', 587)
+    msg.attach(MIMEText(message, 'html', _charset='utf-8'))
+    mailServer = smtplib.SMTP(MAIL['server'], MAIL['port'])
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
-    mailServer.login(gmailUser, gmailPassword)
-    mailServer.sendmail(gmailUser, recipient, msg.as_string())
+    mailServer.login(MAIL['user'], MAIL['pass'])
+    mailServer.sendmail(MAIL['from'], recipient, msg.as_string())
     mailServer.close()
 
 
@@ -84,8 +75,8 @@ class Mailer(object):
                 msg += '<br>'
                 msg += '*' * 20 + '<br>'
                 for result in filter.filter.results_set:
-                    msg += result.url + '<br>'
-                    msg += 'Kaina: <strong>' + str(result.price) + '</strong><br>'
+                    msg += '<a href="' + result.url + '">' + result.url + '</a>' + '<br>'
+                    msg += 'Kaina: <strong>' + result.price + '</strong><br>'
                     msg += result.title + '<br>'
                     msg += result.details + '<br>'
                     msg += '-' * 20 + '<br>'

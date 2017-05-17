@@ -36,30 +36,19 @@ class SkelbiuSpider(scrapy.Spider):
 
         next_page = response.xpath(".//*[@id='pagination']/a[contains(@rel,'next')]/@href")
         if next_page:
-            url = urlparse.urljoin(response.url, next_page.extract()[0])
+            url = urlparse.urljoin(response.url, next_page.extract_first())
             yield Request(url, self.parse, meta={'id': filter_id, 'user_id': user_id})
 
     def get_title(self, selector):
-        raw_title = selector.xpath('.//div[@class="itemReview"]/h3/a/text()').extract()[0]
-        return raw_title.encode('ascii', errors='ignore').strip()
+        return selector.xpath('.//div[@class="itemReview"]/h3/a/text()').extract_first()
 
     def get_price(self, selector):
-        raw_price = selector.xpath('.//div[@class="adsPrice"]/text()').extract()[0]
-        if (self.hasNumbers(raw_price)):
-            return raw_price.encode('ascii', errors='ignore').strip().replace(' ', '')
+        return selector.xpath('.//div[@class="adsPrice"]/text()').extract_first()
 
-        return False
 
     def get_details(self, selector):
-        try:
-            return ' '.join(selector.xpath(".//div[@class='itemReview']/div[@class='adsTexts']//text()").extract()).encode('ascii', errors='ignore')
-        except Exception as e:
-            return ''
+        return ' '.join(selector.xpath(".//div[@class='itemReview']/div[@class='adsTexts']//text()").extract())
 
     def get_id(self, sel):
-        return sel.xpath("@id")[0].root
-
-    def hasNumbers(self, inputString):
-        return any(char.isdigit() for char in inputString)
-
+        return sel.xpath("@id").extract_first()
 
