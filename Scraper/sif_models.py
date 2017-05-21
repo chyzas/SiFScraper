@@ -1,7 +1,9 @@
 from peewee import *
 from settings import *
 
-database = MySQLDatabase(DB_SETTINGS['DB_NAME'], **{'password': DB_SETTINGS['PASSWD'], 'user': DB_SETTINGS['USER']})
+database = MySQLDatabase(DB_SETTINGS['DB_NAME'], **{'password': DB_SETTINGS['PASSWD'],
+                                                    'user': DB_SETTINGS['USER'],
+                                                    'host': DB_SETTINGS['HOST']})
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
