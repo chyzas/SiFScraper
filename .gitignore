@@ -3,3 +3,4 @@
 .idea/
 Scraper/main.py
 /Scraper/extensions.log
+/Scraper/settings.py

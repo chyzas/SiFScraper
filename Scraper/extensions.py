@@ -14,19 +14,22 @@ logging.basicConfig(filename='extensions.log',level=logging.DEBUG,)
 
 
 def send_mail(message, title, recipient):
-    msg = MIMEMultipart()
-    msg['From'] = MAIL['from']
-    msg['To'] = recipient
-    msg['Subject'] = title
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = MAIL['from']
+        msg['To'] = recipient
+        msg['Subject'] = title
 
-    msg.attach(MIMEText(message, 'html', _charset='utf-8'))
-    mailServer = smtplib.SMTP(MAIL['server'], MAIL['port'])
-    mailServer.ehlo()
-    mailServer.starttls()
-    mailServer.ehlo()
-    mailServer.login(MAIL['user'], MAIL['pass'])
-    mailServer.sendmail(MAIL['from'], recipient, msg.as_string())
-    mailServer.close()
+        msg.attach(MIMEText(message, 'html', _charset='utf-8'))
+        mailServer = smtplib.SMTP(MAIL['server'], MAIL['port'])
+        mailServer.ehlo()
+        mailServer.starttls()
+        mailServer.ehlo()
+        mailServer.login(MAIL['user'], MAIL['pass'])
+        mailServer.sendmail(MAIL['from'], recipient, msg.as_string())
+        mailServer.close()
+    except Exception as e:
+        print e
 
 
 class Mailer(object):
@@ -53,20 +56,34 @@ class Mailer(object):
         self.num_items += 1
 
     def spider_closed(self, spider, reason):
-        items = Results.select(FosUser.email).join(Filter).join(FosUser).join(Websites,
-                                                                              on=Filter.site_id == Websites.id).where(
-            Results.is_new == 1).where(Websites.name == spider.name).group_by(FosUser.email).tuples()
+        items = Results.\
+            select(FosUser.email).\
+            join(Filter).\
+            join(FosUser).\
+            join(Websites, on=Filter.site_id == Websites.id).\
+            where(Results.is_new == 1).\
+            where(Websites.name == spider.name).\
+            group_by(FosUser.email).\
+            tuples()
 
         for email in items:
-            message = self.format_message(email)
+            message = self.format_message(email, spider)
             try:
                 send_mail(message, 'info', email[0])
             except Exception as e:
                 logging.error(e.message)
                 print e.message
 
-    def format_message(self, email):
-        results = Results.select(Results, Filter.filter_name).join(Filter).join(FosUser).where(FosUser.email == email).where(Results.is_new == 1).group_by(Filter.filter_name)
+    def format_message(self, email, spider):
+        results = Results.\
+            select(Results, Filter.filter_name).\
+            join(Filter).\
+            join(FosUser). \
+            join(Websites, on=Filter.site_id == Websites.id). \
+            where(FosUser.email == email).\
+            where(Results.is_new == 1). \
+            where(Websites.name == spider.name). \
+            group_by(Filter.filter_name)
         msg = ''
         try:
             for filter in results:
