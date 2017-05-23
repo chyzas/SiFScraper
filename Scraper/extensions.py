@@ -8,7 +8,9 @@ from scrapy.mail import MailSender
 from Scraper.sif_models import *
 from Scraper.settings import WEBSITE
 from Scraper.settings import MAIL
+from collections import defaultdict
 import logging
+
 
 logging.basicConfig(filename='extensions.log',level=logging.DEBUG,)
 
@@ -30,6 +32,21 @@ def send_mail(message, title, recipient):
         mailServer.close()
     except Exception as e:
         print e
+
+
+def group_items(data):
+    results = {}
+    for line in data:
+        email = line['email']
+        filter = line['filter']
+        if not results.has_key(email):
+            results[email] = {}
+        if not results[email].has_key(filter):
+            results[email][filter] = {}
+            results[email][filter]['items'] = []
+            results[email][filter]['filter_name'] = line['filter_name']
+        results[email][filter]['items'].append(line)
+    return results
 
 
 class Mailer(object):
@@ -57,45 +74,41 @@ class Mailer(object):
 
     def spider_closed(self, spider, reason):
         items = Results.\
-            select(FosUser.email).\
+            select(Results, FosUser.email, Filter.filter_name).\
             join(Filter).\
             join(FosUser).\
             join(Websites, on=Filter.site_id == Websites.id).\
             where(Results.is_new == 1).\
             where(Websites.name == spider.name).\
-            group_by(FosUser.email).\
-            tuples()
+            dicts()
+        grouped = group_items(items)
+        if grouped:
+            for email in grouped:
+                message = self.format_message(grouped[email])
+                try:
+                    send_mail(message, 'Nauji ' + spider.name + '.lt skelbimai', email)
+                except Exception as e:
+                    logging.error(e.message)
+                    print e.message
 
-        for email in items:
-            message = self.format_message(email, spider)
-            try:
-                send_mail(message, 'info', email[0])
-            except Exception as e:
-                logging.error(e.message)
-                print e.message
+        for i in items:
+            Results.update(is_new=0).where(Results.id == i['id']).execute()
 
-    def format_message(self, email, spider):
-        results = Results.\
-            select(Results, Filter.filter_name).\
-            join(Filter).\
-            join(FosUser). \
-            join(Websites, on=Filter.site_id == Websites.id). \
-            where(FosUser.email == email).\
-            where(Results.is_new == 1). \
-            where(Websites.name == spider.name). \
-            group_by(Filter.filter_name)
+
+    def format_message(self, filter_list):
         msg = ''
         try:
-            for filter in results:
-                msg += '<h3>' + filter.filter.filter_name + '</h3><br>'
-                msg += '<a href="' + WEBSITE + 'user/filter/' + str(filter.filter.id) + '/delete'+'">Atsisakyti</a>'
+            for filter in filter_list:
+                current = filter_list[filter]
+                msg += '<h3>' + current['filter_name'] + '</h3><br>'
+                msg += '<a href="' + WEBSITE + 'user/filter/' + str(filter) + '/delete'+'">Atsisakyti</a>'
                 msg += '<br>'
                 msg += '*' * 20 + '<br>'
-                for result in filter.filter.results_set:
-                    msg += '<a href="' + result.url + '">' + result.url + '</a>' + '<br>'
-                    msg += 'Kaina: <strong>' + result.price + '</strong><br>'
-                    msg += result.title + '<br>'
-                    msg += result.details + '<br>'
+                for result in current['items']:
+                    msg += '<a href="' + result['url'] + '">' + result['url'] + '</a>' + '<br>'
+                    msg += 'Kaina: <strong>' + result['price'] + '</strong><br>'
+                    msg += result['title'] + '<br>'
+                    msg += result['details'] + '<br>'
                     msg += '-' * 20 + '<br>'
         except Exception as e:
             print e.message
