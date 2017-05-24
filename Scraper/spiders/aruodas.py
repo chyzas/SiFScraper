@@ -39,7 +39,7 @@ class AutopliusSpider(scrapy.Spider):
 
             disabled = response.xpath(".//*[@class='pagination']/a[last()][contains(@class, 'page-bt-disabled')]").extract_first()
             if not disabled:
-                url = urlparse.urljoin(response.url, response.xpath(".//*[@class='pagination']/a[last()]/@href").extract_first().extract_first())
+                url = urlparse.urljoin(response.url, response.xpath(".//*[@class='pagination']/a[last()]/@href").extract_first())
                 yield Request(url, self.parse, meta={'id': filter_id, 'user_id': user_id})
         except Exception as e:
             print e
