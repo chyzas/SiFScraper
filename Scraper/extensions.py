@@ -12,21 +12,34 @@ import boto.sqs
 from Scraper.settings import SQS
 from boto.sqs.message import RawMessage
 import json
+from datetime import date, datetime
 
 
 logging.basicConfig(filename='extensions.log',level=logging.DEBUG,)
+
 
 def group_items(data):
     results = {}
     for line in data:
         email = line['email']
-        name = line['filter_name']
+        filter = line['filter']
         if not results.has_key(email):
             results[email] = {}
-        if not results[email].has_key(name):
-            results[email][name] = []
-        results[email][name].append(line['id'])
+        if not results[email].has_key(filter):
+            results[email][filter] = {}
+            results[email][filter]['items'] = []
+            results[email][filter]['filter_name'] = line['filter_name']
+        results[email][filter]['items'].append(line)
     return results
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, (datetime, date)):
+        serial = obj.isoformat()
+        return serial
+    raise TypeError ("Type %s not serializable" % type(obj))
 
 
 class Mailer(object):
@@ -54,7 +67,7 @@ class Mailer(object):
 
     def spider_closed(self, spider, reason):
         items = Results.\
-            select(Results.id, FosUser.email, Filter.filter_name).\
+            select(Results, FosUser.email, Filter.filter_name).\
             join(Filter).\
             join(FosUser).\
             join(Websites, on=Filter.site_id == Websites.id).\
@@ -63,9 +76,11 @@ class Mailer(object):
             dicts()
         grouped = group_items(items)
         if grouped and self.num_items != len(items):
-            conn = boto.sqs.connect_to_region('eu-west-1',
-                                              aws_access_key_id=SQS['key'],
-                                              aws_secret_access_key=SQS['secret'])
+            conn = boto.sqs.connect_to_region(
+                'eu-west-1',
+                aws_access_key_id=SQS['key'],
+                aws_secret_access_key=SQS['secret']
+            )
             queue = conn.get_queue('email')
             for email in grouped:
 
@@ -75,7 +90,7 @@ class Mailer(object):
                     'email': email,
                     'template': 'results',
                     'data': grouped[email]
-                }))
+                }, default=json_serial))
                 queue.write(msg)
 
         for i in items:

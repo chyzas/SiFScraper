@@ -34,6 +34,7 @@ DB_SETTINGS = {
 SITES = {
     'skelbiu': 1,
     'autoplius': 2,
+    'aruodas': 3,
 }
 
 MAIL = {
@@ -42,6 +43,12 @@ MAIL = {
     'pass': '',
     'port': 587,
     'from': ''
+}
+
+SQS = {
+    'key': '',
+    'secret': '',
+    'url': ''
 }
 
 WEBSITE = 'http://skelbimuseklys.lt/'
