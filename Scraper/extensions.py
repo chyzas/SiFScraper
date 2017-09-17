@@ -73,7 +73,7 @@ class Mailer(object):
         grouped = group_items(items)
         if grouped and self.num_items != len(items):
             conn = boto.sqs.connect_to_region(
-                'eu-west-1',
+                SQS['region'],
                 aws_access_key_id=SQS['key'],
                 aws_secret_access_key=SQS['secret']
             )
