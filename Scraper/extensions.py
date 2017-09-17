@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import smtplib
 from scrapy import signals
 from scrapy.mail import MailSender
 from Scraper.sif_models import *
-from Scraper.settings import WEBSITE
 import logging
 import boto.sqs
 from Scraper.settings import SQS
