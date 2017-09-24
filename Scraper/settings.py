@@ -26,7 +26,7 @@ EXTENSIONS = {
 # Database connection details
 DB_SETTINGS = {
     'USER': 'root',
-    'PASSWD': '',
+    'PASSWD': 'root',
     'HOST': '127.0.0.1',
     'DB_NAME': 'sif'
 }
@@ -46,6 +46,7 @@ MAIL = {
 }
 
 SQS = {
+    'region': 'eu-central-1',
     'key': '',
     'secret': '',
     'url': ''

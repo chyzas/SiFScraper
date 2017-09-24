@@ -25,6 +25,7 @@ def group_items(data):
             results[email][filter] = {}
             results[email][filter]['items'] = []
             results[email][filter]['filter_name'] = line['filter_name']
+            results[email][filter]['deactivation_token'] = line['deactivation_token']
         results[email][filter]['items'].append(line)
     return results
 
@@ -63,7 +64,7 @@ class Mailer(object):
 
     def spider_closed(self, spider, reason):
         items = Results.\
-            select(Results, FosUser.email, Filter.filter_name).\
+            select(Results, FosUser.email, Filter.filter_name, Filter.deactivation_token).\
             join(Filter).\
             join(FosUser).\
             join(Websites, on=Filter.site_id == Websites.id).\

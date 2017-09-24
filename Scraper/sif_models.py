@@ -49,6 +49,8 @@ class Filter(BaseModel):
     site = ForeignKeyField(db_column='site_id', null=True, rel_model=Websites, to_field='id')
     url = CharField()
     user = ForeignKeyField(db_column='user_id', null=True, rel_model=FosUser, to_field='id')
+    deactivation_token = CharField()
+    token = CharField()
 
     class Meta:
         db_table = 'filter'
