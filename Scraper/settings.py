@@ -19,9 +19,6 @@ ITEM_PIPELINES = {
     'Scraper.pipelines.MySQLStorePipeline': 1,
 }
 
-EXTENSIONS = {
-    'Scraper.extensions.Mailer': 500,
-}
 
 # Database connection details
 DB_SETTINGS = {
@@ -37,13 +34,6 @@ SITES = {
     'aruodas': 3,
 }
 
-MAIL = {
-    'server': '',
-    'user': '',
-    'pass': '',
-    'port': 587,
-    'from': ''
-}
 
 SQS = {
     'region': 'eu-central-1',
@@ -52,7 +42,3 @@ SQS = {
     'url': ''
 }
 
-WEBSITE = 'http://skelbimuseklys.lt/'
-
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'Scraper (+http://www.yourdomain.com)'

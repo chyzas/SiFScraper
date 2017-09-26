@@ -7,28 +7,29 @@
 
 from time import strftime
 from Scraper.sif_models import *
-import logging
-
-logging.basicConfig(filename='pipeline.log',level=logging.DEBUG,)
-
-class ScraperPipeline(object):
-    def process_item(self, item, spider):
-        return item
+from Scraper.settings import SQS
+import boto.sqs
+from boto.sqs.message import RawMessage
+import json
 
 
 class MySQLStorePipeline(object):
+    def __init__(self):
+        self.new = {}
+
     def process_item(self, item, spider):
+        filter_id = item['filter_id']
+        item_id = item['item_id']
         try:
-            result = Results.get(
-                (Results.filter == item['filter_id']) & (Results.item == item['item_id'])
-            )
-            result.is_new = 0
-            result.save()
+            Results.get((Results.filter == filter_id) & (Results.item == item_id))
         except Results.DoesNotExist:
+            if filter_id not in self.new:
+                self.new[filter_id] = {}
+                self.new[filter_id] = []
+            self.new[filter_id].append(item_id)
             try:
                 Results.create(
                     filter=item['filter_id'],
-                    is_new=1,
                     price=item['price'],
                     url=item['url'],
                     title=item['title'],
@@ -37,7 +38,27 @@ class MySQLStorePipeline(object):
                     item=item['item_id']
                 )
             except Exception as e:
-                logging.error(e.message)
                 print e.message
 
         return item
+
+    def close_spider(self, spider):
+        conn = boto.sqs.connect_to_region(
+            SQS['region'],
+            aws_access_key_id=SQS['key'],
+            aws_secret_access_key=SQS['secret']
+        )
+        queue = conn.get_queue('email')
+        for filter in self.new:
+            user = self.get_user(filter)
+            msg = RawMessage()
+            msg.set_body(json.dumps({
+                'subject': 'Nauji ' + spider.name + ' skelbimai',
+                'email': user.email,
+                'template': 'results',
+                'data': {'filter': filter, 'results': self.new[filter]}
+            }))
+            queue.write(msg)
+
+    def get_user(self, filter):
+        return Filter.get(Filter.id == filter).user
