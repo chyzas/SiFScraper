@@ -13,9 +13,9 @@ class AutopliusSpider(scrapy.Spider):
     allowed_domains = ["autoplius.lt"]
 
     def start_requests(self):
-        filters = Filter.select(Filter, FosUser).join(FosUser).where(
-            Filter.site == SITES[NAME],
-            FosUser.enabled == 1,
+        filters = Filter.select(Filter, User).join(User).where(
+            Filter.website == SITES[NAME],
+            User.enabled == 1,
             Filter.active == 1
         )
         for filter in filters:

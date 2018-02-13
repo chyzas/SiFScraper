@@ -7,15 +7,15 @@ from Scraper.sif_models import *
 
 NAME = "aruodas"
 
-class AutopliusSpider(scrapy.Spider):
+class AruodasSpider(scrapy.Spider):
     name = NAME
 
     allowed_domains = ["aruodas.lt"]
 
     def start_requests(self):
-        filters = Filter.select(Filter, FosUser).join(FosUser).where(
-            Filter.site == SITES[NAME],
-            FosUser.enabled == 1,
+        filters = Filter.select(Filter, User).join(User).where(
+            Filter.website == SITES[NAME],
+            User.enabled == 1,
             Filter.active == 1
         )
         for filter in filters:
@@ -34,7 +34,8 @@ class AutopliusSpider(scrapy.Spider):
                 item['price'] = sel.xpath(".//*[@class='list-adress ']/div[@class='price']/span[@class='list-item-price']/text()").extract_first()
                 item['filter_id'] = filter_id
                 item['details'] = self.get_details(sel, ths)
-                item['item_id'] = sel.xpath(".//*[@class='list-remember']/div/@data-id").extract_first()
+                item['ads_id'] = sel.xpath(".//*[@class='list-remember']/div/@data-id").extract_first()
+                item['image'] = sel.xpath(".//div[@class='list-photo']/a/img/@src").extract_first()
                 yield item
 
             disabled = response.xpath(".//*[@class='pagination']/a[last()][contains(@class, 'page-bt-disabled')]").extract_first()

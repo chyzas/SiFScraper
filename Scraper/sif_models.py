@@ -1,75 +1,62 @@
 from peewee import *
 from settings import *
+import datetime
 
 database = MySQLDatabase(DB_SETTINGS['DB_NAME'], **{'password': DB_SETTINGS['PASSWD'],
                                                     'user': DB_SETTINGS['USER'],
                                                     'host': DB_SETTINGS['HOST']})
 
-class UnknownField(object):
-    def __init__(self, *_, **__): pass
-
 class BaseModel(Model):
     class Meta:
         database = database
 
-class FosUser(BaseModel):
-    confirmation_token = CharField(null=True)
-    credentials_expire_at = DateTimeField(null=True)
-    credentials_expired = IntegerField()
-    email = CharField()
-    email_canonical = CharField(unique=True)
-    enabled = IntegerField()
-    expired = IntegerField()
-    expires_at = DateTimeField(null=True)
-    facebook_access_token = CharField(null=True)
-    facebook = CharField(db_column='facebook_id', null=True)
-    last_login = DateTimeField(null=True)
-    locked = IntegerField()
-    password = CharField()
-    password_requested_at = DateTimeField(null=True)
-    roles = TextField()
-    salt = CharField()
-    username = CharField()
-    username_canonical = CharField(unique=True)
+class FailedJob(BaseModel):
+    exception = TextField()
+    failed_at = DateTimeField()
+    payload = TextField()
 
     class Meta:
-        db_table = 'fos_user'
+        db_table = 'failed_jobs'
 
-class Websites(BaseModel):
-    name = CharField(null=True)
-    site_url = CharField(null=True)
+class Website(BaseModel):
+    name = CharField()
+    url = CharField()
 
     class Meta:
         db_table = 'websites'
 
-class Filter(BaseModel):
-    active = IntegerField()
+class User(BaseModel):
+    available_filter_count = IntegerField()
     created_at = DateTimeField()
-    filter_name = CharField()
-    site = ForeignKeyField(db_column='site_id', null=True, rel_model=Websites, to_field='id')
-    url = CharField()
-    user = ForeignKeyField(db_column='user_id', null=True, rel_model=FosUser, to_field='id')
-    deactivation_token = CharField()
+    email = CharField()
+    enabled = IntegerField()
     token = CharField()
 
     class Meta:
-        db_table = 'filter'
+        db_table = 'users'
 
-class MigrationVersions(BaseModel):
-    version = CharField(primary_key=True)
+class Filter(BaseModel):
+    activation_token = CharField()
+    active = IntegerField()
+    created_at = DateTimeField()
+    deactivation_token = CharField()
+    name = CharField()
+    url = TextField()
+    user = ForeignKeyField(db_column='user_id', null=True, rel_model=User, to_field='id')
+    website = ForeignKeyField(db_column='website_id', null=True, rel_model=Website, to_field='id')
 
     class Meta:
-        db_table = 'migration_versions'
+        db_table = 'filters'
 
-class Results(BaseModel):
-    added_on = DateTimeField(null=True)
-    details = TextField()
+class Result(BaseModel):
+    created_at = DateTimeField(default=datetime.datetime.now)
     filter = ForeignKeyField(db_column='filter_id', null=True, rel_model=Filter, to_field='id')
-    is_new = IntegerField(null=True)
-    item = TextField(db_column='item_id')
+    image = TextField(null=True)
+    ads_id = CharField()
     price = CharField(null=True)
     title = TextField(null=True)
-    url = CharField(unique=True)
+    url = CharField()
+    details = TextField(null=True)
 
     class Meta:
         db_table = 'results'
