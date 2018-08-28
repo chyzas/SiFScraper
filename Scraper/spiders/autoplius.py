@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urlparse
+from urllib.parse import urlparse
 import scrapy
 from Scraper.items import ScraperItem
 from scrapy import Request
@@ -13,10 +13,10 @@ class AutopliusSpider(scrapy.Spider):
     allowed_domains = ["autoplius.lt"]
 
     def start_requests(self):
-        filters = Filter.select(Filter, User).join(User).where(
-            Filter.website == SITES[NAME],
-            User.enabled == 1,
-            Filter.active == 1
+        filters = Filters.select(Filters, Users).join(Users).where(
+            Filters.website == SITES[NAME],
+            Users.enabled == 1,
+            Filters.active == 1
         )
         for filter in filters:
             yield Request(filter.url, meta={'id': filter.id, 'user_id': filter.user_id})
@@ -43,7 +43,7 @@ class AutopliusSpider(scrapy.Spider):
                 url = urlparse.urljoin(response.url, next_page.extract()[0])
                 yield Request(url, self.parse, meta={'id': filter_id, 'user_id': user_id})
         except Exception as e:
-            print e
+            print(e)
 
     def get_title(self, selector):
         xpath = selector.xpath("./div[@class='item-section fr']/h2[@class='title-list']/a/text()")

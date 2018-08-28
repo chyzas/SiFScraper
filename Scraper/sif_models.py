@@ -1,31 +1,34 @@
 from peewee import *
-from settings import *
-import datetime
+from .settings import *
 
 database = MySQLDatabase(DB_SETTINGS['DB_NAME'], **{'password': DB_SETTINGS['PASSWD'],
                                                     'user': DB_SETTINGS['USER'],
                                                     'host': DB_SETTINGS['HOST']})
 
+class UnknownField(object):
+    def __init__(self, *_, **__): pass
+
 class BaseModel(Model):
     class Meta:
         database = database
 
-class FailedJob(BaseModel):
+class FailedJobs(BaseModel):
     exception = TextField()
     failed_at = DateTimeField()
     payload = TextField()
 
     class Meta:
-        db_table = 'failed_jobs'
+        table_name = 'failed_jobs'
 
-class Website(BaseModel):
+class Websites(BaseModel):
     name = CharField()
     url = CharField()
+    xpath = CharField()
 
     class Meta:
-        db_table = 'websites'
+        table_name = 'websites'
 
-class User(BaseModel):
+class Users(BaseModel):
     available_filter_count = IntegerField()
     created_at = DateTimeField()
     email = CharField()
@@ -33,31 +36,37 @@ class User(BaseModel):
     token = CharField()
 
     class Meta:
-        db_table = 'users'
+        table_name = 'users'
 
-class Filter(BaseModel):
+class Filters(BaseModel):
     activation_token = CharField()
     active = IntegerField()
     created_at = DateTimeField()
     deactivation_token = CharField()
     name = CharField()
     url = TextField()
-    user = ForeignKeyField(db_column='user_id', null=True, rel_model=User, to_field='id')
-    website = ForeignKeyField(db_column='website_id', null=True, rel_model=Website, to_field='id')
+    user = ForeignKeyField(column_name='user_id', field='id', model=Users, null=True)
+    website = ForeignKeyField(column_name='website_id', field='id', model=Websites, null=True)
 
     class Meta:
-        db_table = 'filters'
+        table_name = 'filters'
 
-class Result(BaseModel):
-    created_at = DateTimeField(default=datetime.datetime.now)
-    filter = ForeignKeyField(db_column='filter_id', null=True, rel_model=Filter, to_field='id')
+class MigrationVersions(BaseModel):
+    version = CharField(primary_key=True)
+
+    class Meta:
+        table_name = 'migration_versions'
+
+class Results(BaseModel):
+    ads = CharField(column_name='ads_id')
+    created_at = DateTimeField()
+    details = CharField()
+    filter = ForeignKeyField(column_name='filter_id', field='id', model=Filters, null=True)
     image = TextField(null=True)
-    ads_id = CharField()
     price = CharField(null=True)
     title = TextField(null=True)
     url = CharField()
-    details = TextField(null=True)
 
     class Meta:
-        db_table = 'results'
+        table_name = 'results'
 

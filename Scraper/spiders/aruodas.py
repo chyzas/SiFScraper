@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urlparse
+from urllib.parse import urlparse
 import scrapy
 from Scraper.items import ScraperItem
 from scrapy import Request
@@ -13,10 +13,10 @@ class AruodasSpider(scrapy.Spider):
     allowed_domains = ["aruodas.lt"]
 
     def start_requests(self):
-        filters = Filter.select(Filter, User).join(User).where(
-            Filter.website == SITES[NAME],
-            User.enabled == 1,
-            Filter.active == 1
+        filters = Filters.select(Filters, Users).join(Users).where(
+            Filters.website == SITES[NAME],
+            Users.enabled == 1,
+            Filters.active == 1
         )
         for filter in filters:
             yield Request(filter.url, meta={'id': filter.id, 'user_id': filter.user_id})
@@ -43,7 +43,7 @@ class AruodasSpider(scrapy.Spider):
                 url = urlparse.urljoin(response.url, response.xpath(".//*[@class='pagination']/a[last()]/@href").extract_first())
                 yield Request(url, self.parse, meta={'id': filter_id, 'user_id': user_id})
         except Exception as e:
-            print e
+            print(e)
 
 
     def get_details(self, sel, keys):

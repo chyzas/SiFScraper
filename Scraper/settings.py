@@ -25,7 +25,7 @@ DB_SETTINGS = {
     'USER': 'root',
     'PASSWD': 'root',
     'HOST': '127.0.0.1',
-    'DB_NAME': 'sif'
+    'DB_NAME': 'seklys'
 }
 
 SITES = {
@@ -39,6 +39,7 @@ SQS = {
     'region': 'eu-central-1',
     'key': '',
     'secret': '',
-    'url': ''
+    'url': '',
+    'queue': 'dev_dot_app_dot_default'
 }
 

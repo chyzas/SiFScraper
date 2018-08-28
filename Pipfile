@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"boto3" = "*"
+peewee = "*"
+pymysql = "*"
+six = "*"
+scrapy = {editable = true, ref = "master", git = "https://github.com/scrapy/scrapy"}
+twisted = {ref = "trunk", git = "https://github.com/twisted/twisted"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urlparse
+from urllib.parse import urlparse
 import scrapy
 from Scraper.items import ScraperItem
 from scrapy import Request
@@ -12,7 +12,7 @@ class SkelbiuSpider(scrapy.Spider):
     allowed_domains = ["skelbiu.lt"]
 
     def start_requests(self):
-        filters = Filter.select(Filter, User).join(User).where(Filter.website == SITES[SKELBIU], User.enabled == 1, Filter.active == 1)
+        filters = Filters.select(Filters, Users).join(Users).where(Filters.website == SITES[SKELBIU], Users.enabled == 1, Filters.active == 1)
         for filter in filters:
             yield Request(filter.url, dont_filter=True, meta={'id': filter.id, 'user_id': filter.user_id})
 
@@ -32,7 +32,7 @@ class SkelbiuSpider(scrapy.Spider):
                 item['image'] = self.get_image(sel)
                 yield item
         except Exception as e:
-            print e.message
+            print(e.message)
 
         next_page = response.xpath(".//*[@id='pagination']/a[contains(@rel,'next')]/@href")
         if next_page:
